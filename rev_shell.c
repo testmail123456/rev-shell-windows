@@ -12,14 +12,10 @@
 #define MAX_PORT_LENGTH 20
 
 typedef struct {
-    char client_ip[MAX_IP_LENGTH];
-    int  client_port;
+    char server_ip[MAX_IP_LENGTH];
+    int  server_port;
 } Config;
 
-/* Parse --client-ip and --client-port from argv.
- * Sets *ip_found / *port_found to 1 if the corresponding flag was provided.
- * Supports both "--client-ip 1.2.3.4" and "--client-ip=1.2.3.4" forms.
- */
 static int parse_args(int argc, char *argv[], Config *config,
                       int *ip_found, int *port_found) {
     *ip_found = 0;
@@ -34,12 +30,12 @@ static int parse_args(int argc, char *argv[], Config *config,
                 printf("Error: --client-ip requires a value\n");
                 return -1;
             }
-            strncpy(config->client_ip, argv[++i], MAX_IP_LENGTH - 1);
-            config->client_ip[MAX_IP_LENGTH - 1] = '\0';
+            strncpy(config->server_ip, argv[++i], MAX_IP_LENGTH - 1);
+            config->server_ip[MAX_IP_LENGTH - 1] = '\0';
             *ip_found = 1;
         } else if (strncmp(arg, "--client-ip=", 12) == 0) {
-            strncpy(config->client_ip, arg + 12, MAX_IP_LENGTH - 1);
-            config->client_ip[MAX_IP_LENGTH - 1] = '\0';
+            strncpy(config->server_ip, arg + 12, MAX_IP_LENGTH - 1);
+            config->server_ip[MAX_IP_LENGTH - 1] = '\0';
             *ip_found = 1;
         }
 
@@ -49,10 +45,10 @@ static int parse_args(int argc, char *argv[], Config *config,
                 printf("Error: --client-port requires a value\n");
                 return -1;
             }
-            config->client_port = atoi(argv[++i]);
+            config->server_port = atoi(argv[++i]);
             *port_found = 1;
         } else if (strncmp(arg, "--client-port=", 14) == 0) {
-            config->client_port = atoi(arg + 14);
+            config->server_port = atoi(arg + 14);
             *port_found = 1;
         }
     }
@@ -60,11 +56,7 @@ static int parse_args(int argc, char *argv[], Config *config,
     return 0;
 }
 
-/* Read config file, but only fill values that haven't already been set
- * via command-line arguments (controlled by ip_found / port_found).
- */
-int read_config(const char *filename, Config *config,
-                int *ip_found, int *port_found) {
+int read_config(const char *filename, Config *config, int *ip_found, int *port_found) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         printf("Error: Could not open file '%s'\n", filename);
@@ -80,14 +72,14 @@ int read_config(const char *filename, Config *config,
             continue;
         }
 
-        if (!*ip_found && strncmp(line, "CLIENT_IP=", 10) == 0) {
-            strncpy(config->client_ip, line + 10, MAX_IP_LENGTH - 1);
-            config->client_ip[MAX_IP_LENGTH - 1] = '\0';
+        if (!*ip_found && strncmp(line, "SERVER_IP=", 10) == 0) {
+            strncpy(config->server_ip, line + 10, MAX_IP_LENGTH - 1);
+            config->server_ip[MAX_IP_LENGTH - 1] = '\0';
             *ip_found = 1;
         }
 
-        if (!*port_found && strncmp(line, "CLIENT_PORT=", 12) == 0) {
-            config->client_port = atoi(line + 12);
+        if (!*port_found && strncmp(line, "SERVER_PORT=", 12) == 0) {
+            config->server_port = atoi(line + 12);
             *port_found = 1;
         }
     }
@@ -100,16 +92,13 @@ int main(int argc, char *argv[]) {
     Config config;
     int ip_found = 0, port_found = 0;
 
-    /* Defaults */
-    strcpy(config.client_ip, "");
-    config.client_port = 0;
+    strcpy(config.server_ip, "");
+    config.server_port = 0;
 
-    /* 1. Try command-line arguments first */
     if (parse_args(argc, argv, &config, &ip_found, &port_found) != 0) {
         return 1;
     }
 
-    /* 2. Fall back to config file for anything still missing */
     if (!ip_found || !port_found) {
         if (read_config("rs.config", &config, &ip_found, &port_found) != 0) {
             printf("Failed to load configuration file\n");
@@ -120,17 +109,16 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* 3. Verify we ended up with both values from somewhere */
     if (!ip_found || !port_found) {
         printf("Error: Missing required configuration:\n");
-        if (!ip_found)   printf("  - client_ip (use --client-ip or CLIENT_IP= in rs.config)\n");
-        if (!port_found) printf("  - client_port (use --client-port or CLIENT_PORT= in rs.config)\n");
+        if (!ip_found)   printf("  - server_ip (use --client-ip or SERVER_IP= in rs.config)\n");
+        if (!port_found) printf("  - server_port (use --client-port or SERVER_PORT= in rs.config)\n");
         return 1;
     }
 
     printf("Configuration loaded successfully:\n");
-    printf("CLIENT_IP: %s\n", config.client_ip);
-    printf("CLIENT_PORT: %d\n", config.client_port);
+    printf("SERVER_IP: %s\n", config.server_ip);
+    printf("SERVER_PORT: %d\n", config.server_port);
 
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2 ,2), &wsaData) != 0) {
@@ -138,12 +126,12 @@ int main(int argc, char *argv[]) {
 		return (1);
 	}
 
-	int port = config.client_port;
+	int port = config.server_port;
 	struct sockaddr_in sa;
 	SOCKET sockt = WSASocketA(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(port);
-	sa.sin_addr.s_addr = inet_addr(config.client_ip);
+	sa.sin_addr.s_addr = inet_addr(config.server_ip);
 
 #ifdef WAIT_FOR_CLIENT
 	while (connect(sockt, (struct sockaddr *) &sa, sizeof(sa)) != 0) {
