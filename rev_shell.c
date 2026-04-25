@@ -24,30 +24,28 @@ static int parse_args(int argc, char *argv[], Config *config,
     for (int i = 1; i < argc; i++) {
         const char *arg = argv[i];
 
-        /* --client-ip */
-        if (strcmp(arg, "--client-ip") == 0) {
+        if (strcmp(arg, "--server-ip") == 0) {
             if (i + 1 >= argc) {
-                printf("Error: --client-ip requires a value\n");
+                printf("Error: --server-ip requires a value\n");
                 return -1;
             }
             strncpy(config->server_ip, argv[++i], MAX_IP_LENGTH - 1);
             config->server_ip[MAX_IP_LENGTH - 1] = '\0';
             *ip_found = 1;
-        } else if (strncmp(arg, "--client-ip=", 12) == 0) {
+        } else if (strncmp(arg, "--server-ip=", 12) == 0) {
             strncpy(config->server_ip, arg + 12, MAX_IP_LENGTH - 1);
             config->server_ip[MAX_IP_LENGTH - 1] = '\0';
             *ip_found = 1;
         }
 
-        /* --client-port */
-        else if (strcmp(arg, "--client-port") == 0) {
+        else if (strcmp(arg, "--server-port") == 0) {
             if (i + 1 >= argc) {
-                printf("Error: --client-port requires a value\n");
+                printf("Error: --server-port requires a value\n");
                 return -1;
             }
             config->server_port = atoi(argv[++i]);
             *port_found = 1;
-        } else if (strncmp(arg, "--client-port=", 14) == 0) {
+        } else if (strncmp(arg, "--server-port=", 14) == 0) {
             config->server_port = atoi(arg + 14);
             *port_found = 1;
         }
