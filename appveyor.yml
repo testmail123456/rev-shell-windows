@@ -1,10 +1,6 @@
 version: 1.0.{build}
 
-image: Visual Studio 2022
-
 build: off
 
-build_script:
-  - cmd: |
-      call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-      cl /W4 rev_shell.c /Fe:rev_shell.exe
+test_script:
+  - echo "YAML is working"
