@@ -36,15 +36,15 @@ int read_config(const char *filename, Config *config) {
         }
 
         // Parse config.client_ip
-        if (strncmp(line, "config.client_ip=", 10) == 0) {
-            strncpy(config->config.client_ip, line + 10, MAX_IP_LENGTH - 1);
-            config->config.client_ip[MAX_IP_LENGTH - 1] = '\0';
+        if (strncmp(line, "CLIENT_IP=", 10) == 0) {
+            strncpy(config->client_ip, line + 10, MAX_IP_LENGTH - 1);
+            config->client_ip[MAX_IP_LENGTH - 1] = '\0';
             ip_found = 1;
         }
 
         // Parse config.client_port
-        if (strncmp(line, "config.client_port=", 12) == 0) {
-            config->config.client_port = atoi(line + 12);
+        if (strncmp(line, "CLIENT_PORT=", 12) == 0) {
+            config->client_port = atoi(line + 12);
             port_found = 1;
         }
     }
@@ -65,14 +65,14 @@ int main(void) {
 	Config config;
 
     // Initialize config with empty/default values
-    strcpy(config.config.client_ip, "");
-    config.config.client_port = 0;
+    strcpy(config.client_ip, "");
+    config.client_port = 0;
 
     // Read configuration
     if (read_config("rs.config", &config) == 0) {
         printf("Configuration loaded successfully:\n");
-        printf("CLIENT_IP: %s\n", config.config.client_ip);
-        printf("CLIENT_PORT: %d\n", config.config.client_port);
+        printf("CLIENT_IP: %s\n", config.client_ip);
+        printf("CLIENT_PORT: %d\n", config.client_port);
     } else {
         printf("Failed to load configuration\n");
         return 1;
