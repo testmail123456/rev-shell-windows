@@ -12,8 +12,8 @@
 #define MAX_PORT_LENGTH 20
 
 typedef struct {
-    char config.client_ip[MAX_IP_LENGTH];
-    int config.client_port;
+    char client_ip[MAX_IP_LENGTH];
+    int client_port;
 } Config;
 
 int read_config(const char *filename, Config *config) {
